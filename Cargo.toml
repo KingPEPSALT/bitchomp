@@ -1,9 +1,11 @@
 [package]
 name = "bitchomp"
+authors = ["KingPEPSALT", "AnthonyFuller"]
 description = "A library for reading in different types from a buffer of bytes."
 version = "0.1.0"
 edition = "2021"
 license = "AGPL-3.0-or-later"
+repository = "https://github.com/KingPEPSALT/bitchomp"
 keywords = ["byte", "bytes", "endian", "reading", "writing"]
 categories = ["encoding"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
