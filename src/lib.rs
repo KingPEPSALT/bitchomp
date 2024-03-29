@@ -5,9 +5,9 @@
     trait_alias,
     debug_closure_helpers
 )]
-mod bytereader;
-mod bytewriter;
-mod transmutable;
+pub mod bytereader;
+pub mod bytewriter;
+pub mod transmutable;
 
 #[cfg(test)]
 mod test;
