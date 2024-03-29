@@ -12,6 +12,6 @@ pub mod transmutable;
 #[cfg(test)]
 mod test;
 
-use bytereader::*;
-use bytewriter::*;
-use transmutable::*;
+pub use bytereader::*;
+pub use bytewriter::*;
+pub use transmutable::*;
