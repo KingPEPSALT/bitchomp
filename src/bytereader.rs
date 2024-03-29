@@ -82,6 +82,7 @@ impl<'a> ByteReader<'a> {
             cursor: self.cursor(),
         }
     }
+
     /// Returns a ByteReader reading from buf
     ///
     /// # Arguments
@@ -215,6 +216,7 @@ impl<'a> ByteReader<'a> {
             .map_err(|e| self.err(ByteReaderErrorKind::TryFromBytesError(e)))?;
         Ok(s)
     }
+
     /// Reads a type T from the buffer
     ///
     /// # Arguments
@@ -268,13 +270,16 @@ impl<'a> ByteReader<'a> {
         let size = self.read::<u32>()? as usize;
         self.read_n::<T>(size)
     }
+
     pub fn read_until<T: ByteReaderResource>(&'a mut self) -> Result<Vec<T>, ByteReaderError> {
         Ok(self.iter::<T>().fuse().collect::<Vec<T>>())
     }
+
     pub fn read_remaining<T: ByteReaderResource>(&mut self) -> Result<Vec<T>, ByteReaderError> {
         let v = self.size::<T>()?;
         self.read_n::<T>(self.len() / v)
     }
+
     pub fn rebase(&mut self, pos: usize) {
         self.buf = &self.buf[pos..];
         self.cursor = self.buf;
@@ -288,10 +293,12 @@ impl<'a> io::Read for ByteReader<'a> {
         Ok(cmp::min(self.cursor.len(), buf.len()))
     }
 }
+
 impl<'a> BufRead for ByteReader<'a> {
     fn fill_buf(&mut self) -> std::io::Result<&[u8]> {
         Ok(self.cursor)
     }
+
     fn consume(&mut self, amt: usize) {
         self.cursor = &self.cursor[amt..];
     }
@@ -309,7 +316,3 @@ impl<'a, T: ByteReaderResource> Iterator for ByteReaderIterator<'a, T> {
         self.buf.read::<T>().ok()
     }
 }
-
-#[cfg(test)]
-use super::transmutable::ByteError;
-

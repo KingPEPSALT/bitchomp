@@ -6,8 +6,10 @@ use super::{Endianness, ToBytes};
 pub enum ByteWriterError {
     Fail,
 }
+
 // T::Bytes: Into<Vec<u8>>
 pub trait ByteWriterResource = ToBytes<Bytes = Vec<u8>>;
+
 pub struct ByteWriter {
     buf: Vec<u8>,
     endianness: Endianness,
@@ -20,11 +22,13 @@ impl ByteWriter {
             endianness,
         }
     }
+
     pub fn append<T: ByteWriterResource>(&mut self, data: T) -> usize {
         let mut buf = data.to_bytes(self.endianness);
         self.buf.append(&mut buf);
         buf.len()
     }
+
     pub fn write<T: ByteWriterResource>(
         &mut self,
         data: T,
@@ -37,8 +41,13 @@ impl ByteWriter {
         }
         Ok(buf.len())
     }
+
     pub fn len(&self) -> usize {
         self.buf.len()
+    }
+
+    pub fn append_vec(&mut self, mut data: Vec<u8>) -> () {
+        self.buf.append(&mut data);
     }
 
     pub fn write_vec<T: ByteWriterResource + Clone>(&mut self, data: Vec<T>) -> usize {
