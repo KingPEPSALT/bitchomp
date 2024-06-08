@@ -3,7 +3,7 @@ use std::{
     cmp,
     convert::Infallible,
     io::{self, BufRead, Write},
-    marker::PhantomData,
+    marker::PhantomData, mem::size_of,
 };
 
 use super::{Endianness, TryFromBytes, TryFromBytesError};
