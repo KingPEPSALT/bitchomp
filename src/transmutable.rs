@@ -61,6 +61,7 @@ pub trait ToBytes: Sized {
 pub enum TryFromBytesError {
     StringFromBytes(FromUtf8Error),
     ArrayFromSlice,
+    OutOfBounds,
 }
 
 impl From<FromUtf8Error> for TryFromBytesError {
@@ -96,6 +97,11 @@ where
         bytes: <Self as TryFromBytes>::Bytes,
         endianness: Endianness,
     ) -> Result<(Self, usize), Self::Error> {
+        let size = size_of::<T>();
+        if bytes.len() < size {
+            return Err(TryFromBytesError::OutOfBounds);
+        }
+
         let array_bytes: &[u8; size_of::<T>()] = &bytes.as_slice()[..size_of::<T>()]
             .try_into()
             .or(Err(TryFromBytesError::ArrayFromSlice))?;
