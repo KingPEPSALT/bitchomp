@@ -30,6 +30,9 @@ impl TInt for i128 {}
 pub trait TryFromBytes: Sized {
     type Bytes;
     type Error = TryFromBytesError;
+
+    /// Attempts to convert from the byte format to Self
+    /// returning the number 
     fn try_from_bytes(
         bytes: Self::Bytes,
         endianness: Endianness,

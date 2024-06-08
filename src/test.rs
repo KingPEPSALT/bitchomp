@@ -1,4 +1,7 @@
+use std::time::{Duration, Instant};
+
 use super::{ByteError, ByteReader, ByteWriter, Endianness};
+
 #[test]
 fn test_bytewriter() -> Result<(), ByteError> {
     let mut writer = ByteWriter::new(Endianness::default());
@@ -16,7 +19,7 @@ fn test_bytewriter() -> Result<(), ByteError> {
 
 #[test]
 fn test_bytereader() -> Result<(), ByteError> {
-    let data = std::fs::read("texture.text")?;
+    let data = std::fs::read("test/texture.text")?;
     let mut reader = ByteReader::new(&data, Endianness::default());
     assert_eq!(reader.read::<u16>()?, 1);
     assert_eq!(reader.read::<u16>()?, 0);
@@ -31,5 +34,73 @@ fn test_bytereader() -> Result<(), ByteError> {
         reader.read_n::<u32>(14)?,
         vec![8192, 10240, 10752, 10880, 10912, 10920, 10928, 10936, 0, 0, 0, 0, 0, 0,]
     );
+    Ok(())
+}
+
+/// Utility class for timing functions
+struct Timer {
+    instant: Instant,
+}
+
+impl Timer {
+    fn new() -> Self {
+        Self {
+            instant: Instant::now(),
+        }
+    }
+
+    fn restart(&mut self) {
+        self.instant = Instant::now();
+    }
+    fn time(&mut self) -> Duration {
+        let ret = self.instant.elapsed();
+        self.restart();
+        return ret;
+    }
+}
+
+#[test]
+fn benchmark_bytereader() -> Result<(), ByteError> {
+    let mut timer = Timer::new();
+    let data = std::fs::read("test/texture.text")?;
+    println!("std::fs::read(\"texture.text\"): {:#?}", timer.time());
+    let mut reader = ByteReader::new(&data, Endianness::default());
+    println!(
+        "ByteReader::new(&data, Endianness::default()): {:#?}",
+        timer.time()
+    );
+    let mut bytes = reader.read_remaining::<u8>()?;
+    let len = bytes.len();
+    println!(
+        "reader.read_remaining::<u8>()?: {:#?} - {:#?} bytes",
+        timer.time(),
+        len
+    );
+    reader.rebase(0);
+    bytes = reader.read_n::<u8>(len)?;
+    println!("reader.read_n::<u8>({:#?})?: {:#?}", len, timer.time());
+    assert_eq!(bytes.len(), len);
+    reader.rebase(0);
+    assert_eq!(bytes.len(), len);
+
+    let mut new_reader = ByteReader::new(&data, Endianness::default());
+    timer.restart();
+    new_reader.read_n::<u16>(len / 2)?;
+    println!(
+        "reader.read_n::<u16>({})?: {:#?}",
+        len / 2,
+        timer.time()
+    );
+
+    Ok(())
+}
+
+#[test]
+fn bytereader_raw_reading() -> Result<(), ByteError> {
+    let data = std::fs::read("test/texture.text")?;
+    let mut reader = ByteReader::new(&data, Endianness::default());
+    reader.read_n::<u16>(data.len() / 2)?;
+    reader.rebase(0);
+    assert!(reader.read_n::<u16>(data.len()).is_err());
     Ok(())
 }
