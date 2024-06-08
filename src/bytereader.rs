@@ -211,7 +211,12 @@ impl<'a> ByteReader<'a> {
         res
     }
 
-    pub fn size<T: ByteReaderResource>(&mut self) -> Result<usize, ByteReaderError> {
+    /// Gets the size of the buffer
+    pub fn size(&self) -> usize {
+        self.buf.len()
+    }
+
+    pub fn byte_size<T: ByteReaderResource>(&mut self) -> Result<usize, ByteReaderError> {
         let (_, s) = T::try_from_bytes(self.cursor.to_vec(), self.endianness)
             .map_err(|e| self.err(ByteReaderErrorKind::TryFromBytesError(e)))?;
         Ok(s)
@@ -276,7 +281,7 @@ impl<'a> ByteReader<'a> {
     }
 
     pub fn read_remaining<T: ByteReaderResource>(&mut self) -> Result<Vec<T>, ByteReaderError> {
-        let v = self.size::<T>()?;
+        let v = self.byte_size::<T>()?;
         self.read_n::<T>(self.len() / v)
     }
 
