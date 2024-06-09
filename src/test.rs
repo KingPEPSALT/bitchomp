@@ -104,3 +104,13 @@ fn bytereader_raw_reading() -> Result<(), ByteError> {
     assert!(reader.read_n::<u16>(data.len()).is_err());
     Ok(())
 }
+
+#[test]
+fn test_bytereader_read_sized_vector() -> Result<(), ByteError> {
+    let data = vec![0, 0, 0, 3, 250, 230, 210];
+    let mut reader = ByteReader::new(&data, Endianness::Big);
+    assert_eq!(reader.peek::<u32>()?, 3);
+    assert_eq!(reader.read_sized_vector::<u8>()?, vec![250, 230, 210]);
+    Ok(())
+    
+}

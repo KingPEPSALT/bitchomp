@@ -294,13 +294,14 @@ impl<'a> ByteReader<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn read_n<T: ByteReaderResource<'a>>(
+    pub fn read_n<T: ByteReaderResource<'a> + Sized>(
         &mut self,
         n: usize,
+        // handle the error here to avoid consuming bytes we don't have
     ) -> Result<Vec<T>, ByteReaderError> {
-        let res = self.peek_n(n);
-        self.consume(n);
-        res
+        let res = self.peek_n::<T>(n)?;
+        self.consume(n*std::mem::size_of::<T>());
+        Ok(res)
     }
 
     /// Reads a type T from the buffer n times without consuming
@@ -329,7 +330,7 @@ impl<'a> ByteReader<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn peek_n<T: ByteReaderResource<'a>>(&mut self, n: usize) -> Result<Vec<T>, ByteReaderError> {
+    pub fn peek_n<T: ByteReaderResource<'a> + Sized>(&mut self, n: usize) -> Result<Vec<T>, ByteReaderError> {
         if self.len() / size_of::<T>() < n {
             return Err(ByteReaderError {
                 kind: ByteReaderErrorKind::NoBytes,
