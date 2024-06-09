@@ -276,12 +276,12 @@ impl<'a> ByteReader<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn read_n<T: ByteReaderResource>(&mut self, n: usize) -> Result<Vec<T>, ByteReaderError> {
+    pub fn read_n<T: ByteReaderResource + Sized>(&mut self, n: usize) -> Result<Vec<T>, ByteReaderError> {
         if self.len()/size_of::<T>() < n {
             return Err(ByteReaderError { kind: ByteReaderErrorKind::NoBytes, cursor: self.cursor() })
         }
         let res = Ok(Vec::from(unsafe {
-            &std::mem::transmute::<&[u8], &[T]>(&self.cursor)[0..n]
+            &(&*(&self.cursor as *const _ as *const &[T]))[..n]
         }));
         self.consume(n);
         res

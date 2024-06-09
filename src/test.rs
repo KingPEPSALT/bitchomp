@@ -78,14 +78,14 @@ fn benchmark_bytereader() -> Result<(), ByteError> {
     );
     reader.rebase(0);
     bytes = reader.read_n::<u8>(len)?;
-    println!("reader.read_n::<u8>({:#?})?: {:#?}", len, timer.time());
+    println!("reader.read_n::<u8>({})?: {:#?}", len, timer.time());
     assert_eq!(bytes.len(), len);
     reader.rebase(0);
-    assert_eq!(bytes.len(), len);
-
-    let mut new_reader = ByteReader::new(&data, Endianness::default());
+    
     timer.restart();
-    new_reader.read_n::<u16>(len / 2)?;
+    // assign to avoid it getting thrown out
+    let _new_bytes = reader.read_n::<u16>(len / 2)?;
+    assert_eq!(bytes.len(), len);
     println!(
         "reader.read_n::<u16>({})?: {:#?}",
         len / 2,
