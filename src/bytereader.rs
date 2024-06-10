@@ -342,13 +342,11 @@ impl<'a> ByteReader<'a> {
                 cursor: self.cursor(),
             });
         }
-        let transmuted_slice = unsafe {
+        unsafe {
             let cursor_as_ptr = &self.cursor as *const _;
-            let transmuted_cursor = cursor_as_ptr as *const &[T];
-            *(transmuted_cursor)
-        };
-
-        Ok(transmuted_slice[..n].to_vec())
+            let transmuted_cursor = *(cursor_as_ptr as *const &[T]);
+            Ok(transmuted_cursor[..n].to_vec())
+        }
     }
 
     /// Reads a type T from the buffer n times without consuming
