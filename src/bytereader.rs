@@ -1,5 +1,6 @@
 //! bytereader.rs
 use std::{
+    alloc::System,
     cmp,
     convert::Infallible,
     fmt::Debug,
@@ -342,11 +343,12 @@ impl<'a> ByteReader<'a> {
                 cursor: self.cursor(),
             });
         }
-        let new_slice: &mut [T] = &mut [];
-        unsafe {
-            new_slice.copy_from_slice(&std::mem::transmute::<&[u8], &[T]>(&self.cursor)[..n]);
-        };
-        Ok(new_slice.to_vec())
+        Ok(unsafe {
+            let y = &std::mem::transmute::<&[u8], &[T]>(&self.cursor)[..n];
+            assert!(y.as_ptr().is_aligned());
+            y
+        }[..n]
+            .to_vec())
     }
 
     /// Reads a type T from the buffer n times without consuming
@@ -383,7 +385,9 @@ impl<'a> ByteReader<'a> {
         self.read_n::<T>(size)
     }
 
-    pub fn read_remaining<T: ByteReaderResource<'a> + Copy>(&mut self) -> Result<Vec<T>, ByteReaderError> {
+    pub fn read_remaining<T: ByteReaderResource<'a> + Copy>(
+        &mut self,
+    ) -> Result<Vec<T>, ByteReaderError> {
         self.read_n::<T>(self.len() / size_of::<T>())
     }
 
