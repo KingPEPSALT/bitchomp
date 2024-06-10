@@ -296,7 +296,7 @@ impl<'a> ByteReader<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn read_n<T: ByteReaderResource<'a> + Sized>(
+    pub fn read_n<T: ByteReaderResource<'a> + Sized + Copy>(
         &mut self,
         n: usize,
     ) -> Result<Vec<T>, ByteReaderError> {
@@ -332,7 +332,7 @@ impl<'a> ByteReader<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn peek_n<T: ByteReaderResource<'a> + Sized>(
+    pub fn peek_n<T: ByteReaderResource<'a> + Sized + Copy>(
         &self,
         n: usize,
     ) -> Result<Vec<T>, ByteReaderError> {
@@ -342,9 +342,11 @@ impl<'a> ByteReader<'a> {
                 cursor: self.cursor(),
             });
         }
-        Ok(unsafe {
-            std::mem::transmute::<&[u8], &[T]>(&self.cursor)[..n].to_vec()
-        })
+        let new_slice: &mut [T] = &mut [];
+        unsafe {
+            new_slice.copy_from_slice(&std::mem::transmute::<&[u8], &[T]>(&self.cursor)[..n]);
+        };
+        Ok(new_slice.to_vec())
     }
 
     /// Reads a type T from the buffer n times without consuming
@@ -374,14 +376,14 @@ impl<'a> ByteReader<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn read_sized_vector<T: ByteReaderResource<'a>>(
+    pub fn read_sized_vector<T: ByteReaderResource<'a> + Copy>(
         &mut self,
     ) -> Result<Vec<T>, ByteReaderError> {
         let size = self.read::<u32>()? as usize;
         self.read_n::<T>(size)
     }
 
-    pub fn read_remaining<T: ByteReaderResource<'a>>(&mut self) -> Result<Vec<T>, ByteReaderError> {
+    pub fn read_remaining<T: ByteReaderResource<'a> + Copy>(&mut self) -> Result<Vec<T>, ByteReaderError> {
         self.read_n::<T>(self.len() / size_of::<T>())
     }
 
