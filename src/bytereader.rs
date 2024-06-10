@@ -1,9 +1,6 @@
 //! bytereader.rs
 use std::{
-    cmp,
-    convert::Infallible,
-    io::{self, BufRead, Write},
-    marker::PhantomData, mem::size_of,
+    cmp, convert::Infallible, fmt::Debug, io::{self, BufRead, Write}, marker::PhantomData, mem::size_of
 };
 
 use super::{Endianness, TryFromBytes, TryFromBytesError};
@@ -300,8 +297,10 @@ impl<'a> ByteReader<'a> {
         // handle the error here to avoid consuming bytes we don't have
     ) -> Result<Vec<T>, ByteReaderError> {
         let res = self.peek_n::<T>(n)?;
+        let mut f = vec![];
+        f.extend_from_slice(res);
         self.consume(n*std::mem::size_of::<T>());
-        Ok(res)
+        Ok(f)
     }
 
     /// Reads a type T from the buffer n times without consuming
@@ -330,7 +329,7 @@ impl<'a> ByteReader<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn peek_n<T: ByteReaderResource<'a> + Sized>(&mut self, n: usize) -> Result<Vec<T>, ByteReaderError> {
+    pub fn peek_n<T: ByteReaderResource<'a> + Sized>(&self, n: usize) -> Result<&[T], ByteReaderError> {
         if self.len() / size_of::<T>() < n {
             return Err(ByteReaderError {
                 kind: ByteReaderErrorKind::NoBytes,
@@ -342,7 +341,8 @@ impl<'a> ByteReader<'a> {
             let transmuted_cursor = cursor_as_ptr as *const &[T];
             *(transmuted_cursor)
         };
-        Ok(Vec::from(&transmuted_slice[..n]))
+
+        Ok(&transmuted_slice[..n])
     }
 
     /// Reads a type T from the buffer n times without consuming

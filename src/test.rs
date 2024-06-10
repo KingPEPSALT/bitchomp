@@ -81,16 +81,12 @@ fn benchmark_bytereader() -> Result<(), ByteError> {
     println!("reader.read_n::<u8>({})?: {:#?}", len, timer.time());
     assert_eq!(bytes.len(), len);
     reader.rebase(0);
-    
+
     timer.restart();
     // assign to avoid it getting thrown out
     let _new_bytes = reader.read_n::<u16>(len / 2)?;
     assert_eq!(bytes.len(), len);
-    println!(
-        "reader.read_n::<u16>({})?: {:#?}",
-        len / 2,
-        timer.time()
-    );
+    println!("reader.read_n::<u16>({})?: {:#?}", len / 2, timer.time());
 
     Ok(())
 }
@@ -107,10 +103,18 @@ fn bytereader_raw_reading() -> Result<(), ByteError> {
 
 #[test]
 fn test_bytereader_read_sized_vector() -> Result<(), ByteError> {
-    let data = vec![0, 0, 0, 3, 250, 230, 210];
-    let mut reader = ByteReader::new(&data, Endianness::Big);
-    assert_eq!(reader.peek::<u32>()?, 3);
-    assert_eq!(reader.read_sized_vector::<u8>()?, vec![250, 230, 210]);
+    let data = vec![
+        12, 0, 0, 0, 0, 16, 1, 0, 0, 0, 85, 85, 21, 0, 1, 16, 1, 0, 0, 0, 85, 85, 21, 0, 2, 16, 1,
+        0, 0, 0, 85, 85, 21, 0, 3, 16, 1, 0, 0, 0, 85, 85, 21, 0, 4, 16, 1, 0, 0, 0, 85, 85,
+    ];
+    let mut reader = ByteReader::new(&data, Endianness::Little);
+    assert_eq!(reader.peek::<u32>()?, 12);
+    assert_eq!(
+        reader.read_sized_vector::<u32>()?,
+        vec![
+            69632, 1431633920, 268501013, 1, 1398101, 69634, 1431633920, 268632085, 1, 1398101,
+            69636, 1431633920
+        ]
+    );
     Ok(())
-    
 }
