@@ -342,11 +342,9 @@ impl<'a> ByteReader<'a> {
                 cursor: self.cursor(),
             });
         }
-        unsafe {
-            let cursor_as_ptr = &self.cursor as *const _;
-            let transmuted_cursor = *(cursor_as_ptr as *const &[T]);
-            Ok(transmuted_cursor[..n].to_vec())
-        }
+        Ok(unsafe {
+            std::mem::transmute::<&[u8], &[T]>(&self.cursor)[..n].to_vec()
+        })
     }
 
     /// Reads a type T from the buffer n times without consuming
