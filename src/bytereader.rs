@@ -283,7 +283,7 @@ impl<'a> ByteReader<'a> {
         let res = Ok(Vec::from(unsafe {
             &std::mem::transmute::<&[u8], &[T]>(&self.cursor)[0..n]
         }));
-        self.consume(n);
+        self.consume(n * size_of::<T>());
         res
     }
 
