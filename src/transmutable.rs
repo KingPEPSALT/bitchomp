@@ -32,7 +32,7 @@ pub trait TryFromBytes: Sized {
     type Error = TryFromBytesError;
 
     /// Attempts to convert from the byte format to Self
-    /// returning the number 
+    /// returning the number
     fn try_from_bytes(
         bytes: Self::Bytes,
         endianness: Endianness,

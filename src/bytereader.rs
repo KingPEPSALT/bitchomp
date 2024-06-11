@@ -1,6 +1,6 @@
 //! bytereader.rs
+use core::fmt;
 use std::{
-    alloc::System,
     cmp,
     convert::Infallible,
     fmt::Debug,
@@ -8,6 +8,8 @@ use std::{
     marker::PhantomData,
     mem::size_of,
 };
+
+use crate::Chomp;
 
 use super::{Endianness, TryFromBytes, TryFromBytesError};
 
@@ -216,11 +218,8 @@ impl<'a> ByteReader<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn read<T: ByteReaderResource<'a>>(&mut self) -> Result<T, ByteReaderError> {
-        let (v, s) = T::try_from_bytes(self.cursor.into(), self.endianness)
-            .map_err(|e| self.err(ByteReaderErrorKind::TryFromBytesError(e)))?;
-        self.consume(s);
-        Ok(v)
+    pub fn read<T: ByteReaderResource<'a>>(&mut self) -> Result<Chomp<T>, ByteReaderError> {
+        Ok(self.read_n(1)?[0].clone())
     }
 
     /// Reads a type T from the buffer
@@ -252,11 +251,8 @@ impl<'a> ByteReader<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn peek<T: ByteReaderResource<'a>>(&mut self) -> Result<T, ByteReaderError> {
-        let here = self.cursor;
-        let res = self.read::<T>();
-        self.cursor = here;
-        res
+    pub fn peek<T: ByteReaderResource<'a>>(&mut self) -> Result<Chomp<T>, ByteReaderError> {
+        Ok(self.peek_n(1)?[0].clone())
     }
 
     /// Gets the size of the buffer
@@ -297,10 +293,10 @@ impl<'a> ByteReader<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn read_n<T: ByteReaderResource<'a> + Sized + Copy>(
+    pub fn read_n<T: ByteReaderResource<'a> + Sized>(
         &mut self,
         n: usize,
-    ) -> Result<Vec<T>, ByteReaderError> {
+    ) -> Result<Vec<Chomp<T>>, ByteReaderError> {
         // handle the error here to avoid consuming bytes we don't have
         let res = self.peek_n::<T>(n)?;
         self.consume(n * std::mem::size_of::<T>());
@@ -333,10 +329,10 @@ impl<'a> ByteReader<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn peek_n<T: ByteReaderResource<'a> + Sized + Copy>(
+    pub fn peek_n<T: ByteReaderResource<'a> + Sized>(
         &self,
         n: usize,
-    ) -> Result<Vec<T>, ByteReaderError> {
+    ) -> Result<Vec<Chomp<T>>, ByteReaderError> {
         if self.len() / size_of::<T>() < n {
             return Err(ByteReaderError {
                 kind: ByteReaderErrorKind::NoBytes,
@@ -344,11 +340,19 @@ impl<'a> ByteReader<'a> {
             });
         }
         Ok(unsafe {
-            let y = &std::mem::transmute::<&[u8], &[T]>(&self.cursor)[..n];
-            assert!(y.as_ptr().is_aligned());
-            y
-        }[..n]
-            .to_vec())
+            std::mem::transmute::<&[u8], &[T]>(&self.cursor)
+                .iter()
+                .map(|t| Chomp::new(t))
+                .take(n)
+                .collect::<Vec<Chomp<T>>>()
+        })
+    }
+
+    pub fn read_string(&mut self) -> Result<String, ByteReaderError> {
+        let (value, size) = String::try_from_bytes(self.cursor.into(), self.endianness)
+            .map_err(|e| self.err(ByteReaderErrorKind::TryFromBytesError(e)))?;
+        self.consume(size);
+        Ok(value)
     }
 
     /// Reads a type T from the buffer n times without consuming
@@ -360,7 +364,6 @@ impl<'a> ByteReader<'a> {
     ///
     /// # Examples
     /// ```
-    /// #![allow(incomplete_features)] // doctests fail on warning.
     /// #![feature(generic_const_exprs)]
     ///
     /// use bitchomp::{ByteReader, ByteError, Endianness};
@@ -380,14 +383,14 @@ impl<'a> ByteReader<'a> {
     /// ```
     pub fn read_sized_vector<T: ByteReaderResource<'a> + Copy>(
         &mut self,
-    ) -> Result<Vec<T>, ByteReaderError> {
-        let size = self.read::<u32>()? as usize;
+    ) -> Result<Vec<Chomp<T>>, ByteReaderError> {
+        let size = self.read::<u32>()?.inner() as usize;
         self.read_n::<T>(size)
     }
 
     pub fn read_remaining<T: ByteReaderResource<'a> + Copy>(
         &mut self,
-    ) -> Result<Vec<T>, ByteReaderError> {
+    ) -> Result<Vec<Chomp<T>>, ByteReaderError> {
         self.read_n::<T>(self.len() / size_of::<T>())
     }
 
@@ -420,10 +423,10 @@ pub struct ByteReaderIterator<'a, T: TryFromBytes> {
     resource_type: PhantomData<T>,
 }
 
-impl<'a, T: ByteReaderResource<'a>> Iterator for ByteReaderIterator<'a, T> {
+impl<'a, T: ByteReaderResource<'a> + fmt::Debug> Iterator for ByteReaderIterator<'a, T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.buf.read::<T>().ok()
+        self.buf.read::<T>().map(|v| v.inner()).ok()
     }
 }
