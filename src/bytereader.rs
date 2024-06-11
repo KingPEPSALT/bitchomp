@@ -176,7 +176,7 @@ impl<'a> ByteReader<'a> {
     ///     let buf = std::fs::read("test/binary.file")?;
     ///     let mut reader = ByteReader::new(&buf, Endianness::Little);
     ///     if reader.seek(15).is_ok() {
-    ///         reader.read::<u32>();
+    ///         let value = reader.read::<u32>()?.inner();
     ///     }
     ///
     ///     // ... do stuff
@@ -209,9 +209,9 @@ impl<'a> ByteReader<'a> {
     ///     let buf = std::fs::read("test/binary.file")?;
     ///     let mut reader = ByteReader::new(&buf, Endianness::Little);
     ///
-    ///     let value = reader.read::<u32>()?;
+    ///     let value = reader.read::<u32>()?.inner();
     ///     // only reads 2 bytes!
-    ///     let next_value = reader.read::<u16>()? as u32;
+    ///     let next_value = reader.read::<u16>()?.inner() as u32;
     ///     
     ///     // do stuff...
     ///     
@@ -241,10 +241,10 @@ impl<'a> ByteReader<'a> {
     ///     let mut reader = ByteReader::new(&buf, Endianness::Little);
     ///     
     ///     // doesn't consume the next 4 bytes!
-    ///     let full_value = reader.peek::<u32>()?;
+    ///     let full_value = reader.peek::<u32>()?.inner();
     ///
     ///     // does consume the next 4 bytes!
-    ///     let [first_half, second_half] = [reader.read::<u16>()? as u32, reader.read::<u16>()? as u32];
+    ///     let [first_half, second_half] = [reader.read::<u16>()?.inner() as u32, reader.read::<u16>()?.inner() as u32];
     ///     
     ///     // do stuff...
     ///  
@@ -277,16 +277,16 @@ impl<'a> ByteReader<'a> {
     /// ```
     /// #![feature(generic_const_exprs)]
     ///
-    /// use bitchomp::{ByteError, ByteReader, Endianness};
+    /// use bitchomp::{ByteError, ByteReader, Endianness, ChompFlatten};
     ///
     /// fn main() -> Result<(), ByteError> {
     ///
     ///     // get buffer
-    ///     let buf = std::fs::read("test/binary.file")?;;
+    ///     let buf = std::fs::read("test/binary.file")?;
     ///     let mut reader = ByteReader::new(&buf, Endianness::Little);
     ///
     ///     // read 32 bytes (or 16 u16s)
-    ///     let values = reader.read_n::<u16>(16)?;
+    ///     let values = reader.read_n::<u16>(16)?.flatten();
     ///     
     ///     // do stuff ...
     ///
@@ -314,7 +314,7 @@ impl<'a> ByteReader<'a> {
     /// ```
     /// #![feature(generic_const_exprs)]
     ///
-    /// use bitchomp::{ByteReader, ByteError, Endianness};
+    /// use bitchomp::{ByteReader, ByteError, Endianness, ChompFlatten};
     ///
     /// fn main() -> Result<(), ByteError> {
     ///     // get buffer
@@ -322,7 +322,7 @@ impl<'a> ByteReader<'a> {
     ///     let mut reader = ByteReader::new(&buf, Endianness::Little);
     ///
     ///     // read 32 bytes (or 16 u16s)
-    ///     let values = reader.read_n::<u16>(16)?;
+    ///     let values = reader.read_n::<u16>(16)?.flatten();
     ///
     ///     // ... do stuff
     ///
@@ -366,7 +366,7 @@ impl<'a> ByteReader<'a> {
     /// ```
     /// #![feature(generic_const_exprs)]
     ///
-    /// use bitchomp::{ByteReader, ByteError, Endianness};
+    /// use bitchomp::{ByteReader, ByteError, Endianness, ChompFlatten};
     ///
     /// fn main() -> Result<(), ByteError> {
     ///     // get buffer
@@ -374,7 +374,7 @@ impl<'a> ByteReader<'a> {
     ///     let mut reader = ByteReader::new(&buf, Endianness::Little);
     ///
     ///     // read 32 bytes (or 16 u16s)
-    ///     let values = reader.read_n::<u16>(16)?;
+    ///     let values = reader.read_n::<u16>(16)?.flatten();
     ///
     ///     // ... do stuff
     ///
