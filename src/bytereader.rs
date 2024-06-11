@@ -301,7 +301,6 @@ impl<'a> ByteReader<'a> {
         let res = self.peek_n::<T>(n)?;
         self.consume(n * std::mem::size_of::<T>());
         Ok(res)
-    }
 
     /// Reads a type T from the buffer n times without consuming
     ///
