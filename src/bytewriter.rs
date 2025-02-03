@@ -1,10 +1,17 @@
 use std::mem::size_of;
+use thiserror::Error;
 
 use super::{Endianness, ToBytes};
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum ByteWriterError {
     Fail,
+}
+
+impl std::fmt::Display for ByteWriterError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 // T::Bytes: Into<Vec<u8>>
