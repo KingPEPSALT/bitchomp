@@ -8,6 +8,7 @@ use std::{
     marker::PhantomData,
     mem::size_of,
 };
+use thiserror::Error;
 
 use crate::Chomp;
 
@@ -17,6 +18,7 @@ use super::{Endianness, TryFromBytes, TryFromBytesError};
 pub trait ByteReaderResource<'a> =
     TryFromBytes<Bytes: From<&'a [u8]>, Error = TryFromBytesError> + Clone;
 /// Error returned by ByteReader
+#[derive(Error)]
 pub struct ByteReaderError {
     kind: ByteReaderErrorKind,
     cursor: usize,
@@ -30,11 +32,28 @@ impl std::fmt::Debug for ByteReaderError {
             .finish()
     }
 }
-#[derive(Debug)]
+
+impl std::fmt::Display for ByteReaderError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ByteReaderError")
+            .field("kind", &self.kind)
+            .field_with("cursor", |f| write!(f, "{:#x}", &self.cursor))
+            .finish()
+    }
+}
+
+#[derive(Debug, Error)]
 pub enum ByteReaderErrorKind {
+    #[error("no bytes")]
     NoBytes,
+
+    #[error("try from bytes error: {0}")]
     TryFromBytesError(TryFromBytesError),
+
+    #[error("I/O error: {0}")]
     IOError(io::Error),
+
+    #[error("infallible")]
     Infallible,
 }
 

@@ -12,3 +12,4 @@ categories = ["encoding"]
 
 [dependencies]
 num-traits = "0.2.18"
+thiserror = "2.0.11"

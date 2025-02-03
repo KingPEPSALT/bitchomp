@@ -1,5 +1,6 @@
 //! transmutable.rs
 use std::{io, mem::size_of, string::FromUtf8Error};
+use thiserror::Error;
 
 use super::{bytereader::ByteReaderError, bytewriter::ByteWriterError};
 
@@ -60,10 +61,15 @@ pub trait ToBytes: Sized {
 }
 
 // trait Transmutable = ToBytes + FromBytes;
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum TryFromBytesError {
+    #[error("utf-8 error: {0}")]
     StringFromBytes(FromUtf8Error),
+
+    #[error("array from slice error")]
     ArrayFromSlice,
+
+    #[error("out of bounds")]
     OutOfBounds,
 }
 
